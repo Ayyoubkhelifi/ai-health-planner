@@ -1,0 +1,82 @@
+\documentclass[12pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{geometry}
+\geometry{a4paper, margin=1in}
+\usepackage{hyperref}
+\usepackage{graphicx}
+\usepackage{titlesec}
+\usepackage{enumitem}
+
+\title{\textbf{AI Health Planner: Development \& Security Report}}
+\author{Development Team}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+This report outlines the architecture, development process, and security measures implemented during the creation of the AI Health Planner application. The platform provides highly personalized, AI-driven daily health routines by synthesizing user health profiles with a localized database of verified recipes.
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+\section{Introduction}
+The AI Health Planner is a full-stack Next.js application designed to provide users with tailored daily health plans. Rather than relying on generic advice, the system leverages an advanced Large Language Model (InclusionAI Ling-2.6-1T via OpenRouter) constrained to a predefined, scientifically grounded dataset of recipes, ingredients, and cross-allergies ingested from Excel documents.
+
+\section{Technology Stack}
+The application is built on a modern web stack to ensure performance, scalability, and type safety:
+\begin{itemize}
+    \item \textbf{Frontend:} Next.js 16 (App Router), React, Tailwind CSS.
+    \item \textbf{Backend:} Next.js Serverless API Routes, Node.js.
+    \item \textbf{Database:} PostgreSQL managed via Prisma ORM.
+    \item \textbf{Authentication:} NextAuth.js (Session-based authentication).
+    \item \textbf{AI Orchestration:} OpenRouter REST API.
+    \item \textbf{Validation:} Zod for strict runtime schema validation.
+\end{itemize}
+
+\section{Development Architecture}
+\subsection{Data Ingestion Pipeline}
+The application relies on verified health data. A dedicated Node.js seeding script (\texttt{scripts/seed.ts}) utilizes \texttt{xlsx} (SheetJS) to read localized Excel datasets containing Ingredients, Recipes, Allergies, and Cross-Allergies. This data is normalized and seeded into the PostgreSQL database, forming the constraints for the AI's generation capabilities.
+
+\subsection{AI Integration Strategy}
+To prevent "hallucinations" (where an AI invents non-existent recipes), the backend dynamically constructs prompts that inject the user's specific health metrics alongside a JSON array of valid recipe IDs and ingredients from our database. The system forces the AI to respond strictly in structured JSON, which is then parsed and saved securely into the database.
+
+\section{Implemented Security Measures}
+Security was prioritized throughout the development lifecycle to protect sensitive user health data and prevent abuse.
+
+\subsection{Authentication \& Authorization}
+\begin{itemize}
+    \item \textbf{Session Management:} We implemented \texttt{NextAuth.js} for secure session handling.
+    \item \textbf{API Route Protection:} Every backend API route validates the existence of a valid user session. If a request lacks a valid \texttt{session.user.id}, it is immediately rejected with a \texttt{401 Unauthorized} status.
+    \item \textbf{Data Isolation:} All database queries strictly scope operations to the authenticated user's ID (\texttt{where: \{ userId: session.user.id \}}), preventing Insecure Direct Object References (IDOR).
+\end{itemize}
+
+\subsection{Data Validation \& Sanitization}
+\begin{itemize}
+    \item \textbf{Zod Schema Validation:} All incoming API requests (e.g., plan generation, task updates) are validated against strict Zod schemas. This ensures that variables like \texttt{durationDays} are within safe integer bounds, preventing application crashes or buffer overflows.
+    \item \textbf{Prompt Injection Mitigation:} User inputs (such as names, goals, and constraints) are passed through a \texttt{sanitizeForPrompt} function before being embedded into the LLM context. This strips out malicious markdown, system instructions, and control characters to prevent prompt injection attacks.
+\end{itemize}
+
+\subsection{Infrastructure Security}
+\begin{itemize}
+    \item \textbf{Content Security Policy (CSP):} Custom CSP headers were configured in \texttt{next.config.ts} to mitigate Cross-Site Scripting (XSS) attacks, strictly defining allowed domains for scripts, styles, and external API connections (e.g., \texttt{openrouter.ai}).
+    \item \textbf{Password Hashing:} User passwords (generated during database seeding or registration) are heavily hashed using \texttt{bcryptjs} before being stored in PostgreSQL.
+    \item \textbf{Environment Variable Protection:} Sensitive keys, such as the \texttt{OPENROUTER\_API\_KEY} and \texttt{DATABASE\_URL}, are strictly contained within the backend Node.js environment and are never exposed to the client bundle.
+\end{itemize}
+
+\subsection{Rate Limiting \& Cost Control}
+To prevent API abuse and control costs associated with the OpenRouter LLM infrastructure:
+\begin{itemize}
+    \item \textbf{Plan Generation Quotas:} The backend actively queries the database to count how many plans a user has generated in the past 24 hours. A strict rate limit of 3 plans per day is enforced via the \texttt{checkRateLimit} function.
+    \item \textbf{Transaction Safety:} Database writes during the complex plan generation process are wrapped in Prisma \texttt{\$transaction} blocks. If any part of the plan saving fails, the entire operation rolls back, preventing orphaned or corrupted data states.
+\end{itemize}
+
+\section{Conclusion}
+The AI Health Planner demonstrates a robust synthesis of generative AI with strict database constraints. By enforcing stringent data validation, robust authentication, and comprehensive security policies at the framework level, the application securely manages sensitive user health data while delivering a highly dynamic and personalized user experience.
+
+\end{document}
