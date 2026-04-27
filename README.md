@@ -15,38 +15,63 @@ A modern, full-stack Next.js 14 web application that uses AI to generate highly 
 
 ## 💻 Prerequisites
 
-Before running this project from scratch, ensure you have the following installed on your machine:
-1. **Node.js** (v18 or higher)
-2. **PostgreSQL** (Running locally or via Docker)
-3. **Git**
+Before running this project, ensure you have the following installed on your machine:
+1. **Node.js** (v18 or higher) - [Download here](https://nodejs.org/)
+2. **Docker Desktop** - [Download here](https://www.docker.com/products/docker-desktop/)
 
 ---
 
-## 🛠️ Step-by-Step Setup Guide (From 0)
+## 🛠️ How to Run the Application
 
-### 1. Clone the repository
+There are two ways to run the application:
+- **Option A:** One-Click Automated (Using Docker Compose)
+- **Option B:** Manual Installation (Using Node.js and a separate Docker DB)
+
+Choose whichever method you prefer. Option A is faster and requires zero configuration.
+
+---
+
+### Option A: One-Click Automated (Docker Compose)
+
+If you have **Docker Desktop** installed and running, you can launch the entire application (Database + Frontend + Backend) with a single command.
+
+1. Ensure **Docker Desktop** is running.
+2. Open your terminal in the `health-planner` folder.
+3. Open the `.env` file and make sure your `OPENROUTER_API_KEY` is pasted in.
+4. Run the following command:
 \`\`\`bash
-# Open your terminal and clone the project
-git clone <repository-url>
-cd health-planner
+docker-compose up --build
+\`\`\`
+*(This will automatically build the app, start the database, run the migrations, seed the Excel data, and start the Next.js server).*
+
+5. Open your browser and navigate to: **[http://localhost:3000](http://localhost:3000)**
+6. Log in with: `admin@healthplanner.ai` / `admin123`
+
+---
+
+### Option B: Manual Installation
+
+### 1. Copy the Project
+Copy the `health-planner` folder from the DVD to your local computer (e.g., to your Desktop or Documents folder). 
+Open your terminal (Command Prompt or PowerShell) and navigate into the folder:
+\`\`\`bash
+cd path\to\health-planner
 \`\`\`
 
 ### 2. Install Dependencies
-Install all required Node modules.
+Install all required Node modules by running:
 \`\`\`bash
 npm install
 \`\`\`
 
 ### 3. Environment Variables Configuration
-Create a `.env` file in the root of the `health-planner` directory and configure the following variables:
+Create a `.env` file in the root of the `health-planner` directory (if it doesn't already exist) and configure the following variables:
 
 \`\`\`env
-# 1. Database Connection URL
-# Replace 'postgres' and 'your_password' with your local Postgres credentials.
-DATABASE_URL="postgresql://postgres:your_password@localhost:5432/health_planner?schema=public"
+# 1. Database Connection URL (Defaults to the Docker container we will launch)
+DATABASE_URL="postgresql://postgres:password@localhost:5432/health_planner?schema=public"
 
 # 2. NextAuth Configuration
-# Generate a secret by running `openssl rand -base64 32` in your terminal or use the one below for local dev
 NEXTAUTH_SECRET="super-secret-key-change-in-production"
 NEXTAUTH_URL="http://localhost:3000"
 
@@ -55,25 +80,29 @@ NEXTAUTH_URL="http://localhost:3000"
 OPENROUTER_API_KEY="sk-or-v1-your-openrouter-api-key"
 \`\`\`
 
-### 4. Setup the Database
-Make sure your local PostgreSQL server is running. Then, execute the Prisma migration to create all the necessary tables in your database:
-\`\`\`bash
-npm run db:migrate
-\`\`\`
-*(If prompted for a migration name, you can press Enter or name it `init`)*
+### 4. Start Docker Desktop
+**CRITICAL STEP:** Before proceeding, open the **Docker Desktop** application on your computer and wait for it to fully start (the Docker icon in your system tray should indicate that the engine is running).
 
-### 5. Seed the Database (Important)
-The application relies on 6 Excel files located in the `db/` folder to populate the database with ingredients, allergies, and recipes. Run the seed script to import all of this data:
+### 5. Run the Startup Script
+We have provided an automated script that will:
+1. Launch a PostgreSQL database container via Docker.
+2. Create the necessary database tables.
+3. Start the Next.js server (Frontend & Backend).
+
+In your terminal, simply run:
+\`\`\`bash
+.\start.bat
+\`\`\`
+*(Keep this terminal window open, as it is running the server!)*
+
+### 6. Seed the Database (Important)
+The application relies on 6 Excel files located in the `db/` folder to populate the database with ingredients, allergies, and recipes. 
+
+Open a **new, separate terminal window**, navigate to the project folder, and run:
 \`\`\`bash
 npm run seed
 \`\`\`
 *Wait for this process to finish. It will output `🎉 Seed complete!` when done.*
-
-### 6. Start the Development Server
-You are now ready to launch the application!
-\`\`\`bash
-npm run dev
-\`\`\`
 
 ### 7. Login and Use the App
 Open your browser and navigate to: **[http://localhost:3000](http://localhost:3000)**
@@ -86,8 +115,8 @@ Since the seed script created an admin user for you, you can log in immediately 
 
 ## 📚 Common Commands
 
-- `npm run dev`: Starts the local development server.
-- `npm run build`: Builds the app for production.
+- `.\start.bat`: The primary script to start the database and the server.
+- `npm run dev`: Starts the local development server (if the database is already running).
 - `npm run seed`: Re-runs the Excel data extraction script.
 - `npx prisma studio`: Opens a local UI in your browser to view and edit your raw database rows.
 
@@ -95,7 +124,7 @@ Since the seed script created an admin user for you, you can log in immediately 
 - **Framework**: Next.js 14 (App Router)
 - **Styling**: Tailwind CSS
 - **Database ORM**: Prisma
-- **Database**: PostgreSQL
+- **Database**: PostgreSQL (via Docker)
 - **Authentication**: NextAuth.js
 - **AI Integration**: OpenRouter SDK (`inclusionai/ling-2.6-1t:free` model)
 - **Data Parsing**: SheetJS (`xlsx`) for Excel ingestion
