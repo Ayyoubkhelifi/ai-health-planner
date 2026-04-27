@@ -1,6 +1,6 @@
 # AI Health Planner
 
-A modern, full-stack Next.js 14 web application that uses AI to generate highly personalized daily health plans based on your physical profile, dietary preferences, and fitness goals. It dynamically assigns real recipes, generates specific exercise routines, and creates personalized mindfulness/hydration tasks.
+A modern, full-stack Next.js 16 web application that uses AI to generate highly personalized daily health plans based on your physical profile, dietary preferences, and fitness goals. It dynamically assigns real recipes, generates specific exercise routines, and creates personalized mindfulness/hydration tasks.
 
 ## 🚀 Features
 
@@ -17,17 +17,19 @@ A modern, full-stack Next.js 14 web application that uses AI to generate highly 
 
 Before running this project, ensure you have the following installed on your machine:
 1. **Node.js** (v18 or higher) - [Download here](https://nodejs.org/)
-2. **Docker Desktop** - [Download here](https://www.docker.com/products/docker-desktop/)
+2. **Docker Desktop** (Optional, but recommended) - [Download here](https://www.docker.com/products/docker-desktop/)
+3. **PostgreSQL** (Required ONLY if you cannot use Docker) - [Download here](https://www.postgresql.org/download/)
 
 ---
 
 ## 🛠️ How to Run the Application
 
-There are two ways to run the application:
-- **Option A:** One-Click Automated (Using Docker Compose)
-- **Option B:** Manual Installation (Using Node.js and a separate Docker DB)
+There are three ways to run the application:
+- **Option A:** One-Click Automated (Using Docker Compose) - *Recommended*
+- **Option B:** Hybrid Installation (Node.js + Docker DB)
+- **Option C:** Completely Native (No Docker at all)
 
-Choose whichever method you prefer. Option A is faster and requires zero configuration.
+Choose whichever method fits your environment. Option A is the fastest.
 
 ---
 
@@ -110,6 +112,43 @@ Open your browser and navigate to: **[http://localhost:3000](http://localhost:30
 Since the seed script created an admin user for you, you can log in immediately using these credentials:
 - **Email:** `admin@healthplanner.ai`
 - **Password:** `admin123`
+
+---
+
+### Option C: Completely Native (No Docker at all)
+
+If you cannot install or run Docker on your machine, you must install the database server natively.
+
+1. **Install PostgreSQL Natively:**
+   - Download and install [PostgreSQL](https://www.postgresql.org/download/) for your operating system.
+   - During installation, set the password for the default `postgres` user.
+   - Leave the default port as `5432`.
+
+2. **Configure Environment:**
+   - Copy the project folder to your computer and open it in your terminal.
+   - Run `npm install`.
+   - Open the `.env` file and update the `DATABASE_URL` to match the password you set during the PostgreSQL installation:
+     \`\`\`env
+     DATABASE_URL="postgresql://postgres:YOUR_PASSWORD_HERE@localhost:5432/health_planner?schema=public"
+     \`\`\`
+   - Make sure your `OPENROUTER_API_KEY` is also set.
+
+3. **Initialize Database & Start App:**
+   - Create the tables:
+     \`\`\`bash
+     npx prisma migrate deploy
+     \`\`\`
+   - Seed the data (Important!):
+     \`\`\`bash
+     npm run seed
+     \`\`\`
+   - Start the server:
+     \`\`\`bash
+     npm run dev
+     \`\`\`
+
+4. **Login:**
+   Navigate to [http://localhost:3000](http://localhost:3000) and log in with `admin@healthplanner.ai` / `admin123`.
 
 ---
 
